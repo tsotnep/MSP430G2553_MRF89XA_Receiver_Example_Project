@@ -1,10 +1,11 @@
 /*
- * main.h
+ * main_nwk.c
  *
  *  Created  on: 06.02.2015
  *  Author: Mairo Leier, Maksim Gorev
+ *	Editors: Tsotne Putkaradze, Nish Tahir
  *
- *  Version: 0.3		15.10.2015
+ *  Version: 0.4		7.12.2015
  */
 /***************************************************************************************************
  *	        Include section					                       		   					       *
@@ -26,7 +27,7 @@
 /***************************************************************************************************
  *	        Define section					                       		   					       *
  ***************************************************************************************************/
-/*
+/* TODO
  * -pwmLED pins are OVERLAPPING with (Wireless module's & LED1_TOGGLE()) -s pins,
  * HIGH probably its better to (change Wireless pins & remove LED1_TOGGLE),
  * BUT before that, for testing, you can simply comment some our pwmLEDs.
@@ -42,7 +43,7 @@
 #define pwmLED4	BIT2
 #define pwmLED5	BIT4
 
-//timer setup
+//timer setup, TODO: use signed(-100) and similar things, instead of binary values
 #define timerZeroStartValue		0b1111111110011011 // -100 => period is 100 counts
 #define timerOneStartValue		0b1111111110011011 // -100 => period is 100 counts
 
@@ -62,11 +63,13 @@ uint8 payload_length;
  *         Main section                                                                            *
  ***************************************************************************************************/
 void main(void) {
-	uint8 cntr, len, var;
+	uint8 len, var;
 	uint8 rssi_env, rssi_rx;
 
 	// Initialize system
 	Print_Error(System_Init());
+	_init_timer0();
+	_init_timer1();
 
 	while (1) {
 
@@ -87,6 +90,7 @@ void main(void) {
 		} else {
 
 			// Toggle LED1 when data is received
+			// TODO : remove LED1_TOGGLE after ensuring communication is OKAY
 			LED1_TOGGLE()
 			;
 
@@ -101,7 +105,7 @@ void main(void) {
 
 			UART_Send_Data("\r\nMessage: ");
 			for (var = 5; var < len; ++var) {
-				/*
+				/* TODO
 				 * here we start writing RxPacket[var] -s into our array,
 				 * that we will process later - in if-else statement
 				 *
@@ -125,7 +129,7 @@ void main(void) {
 			UART_Send_Data("\r\n");		// Insert new line to separate packets
 		}
 
-		/*
+		/*	TODO
 		 * 	here should be if-else statements,
 		 * 	and some logic,
 		 * 	so that highest-valued-pwm will be written in CCR0 (c) tsotne
@@ -189,8 +193,8 @@ __interrupt void Timer11_A(void) {
  ******************* INITIALIZE T I M E R 0 ***********************/
 void _init_timer0() {
 	/*
-	 * ccr0, 		ccr1, 		ccr2
-	 * p1.5-pwmLED4, 	p1.6-pwmLED5,  p1.4//ccr2 is only on port3 that do not exists
+	 * ccr0, 			ccr1, 			ccr2
+	 * p1.5-pwmLED4, 	p1.6-pwmLED5,	p1.4//ccr2 is only on port3 that do not exists
 	 */
 	//Timer0
 	P1DIR |= (pwmLED1 | pwmLED2);
@@ -207,7 +211,7 @@ void _init_timer0() {
  ******************* INITIALIZE T I M E R 1 ***********************/
 void _init_timer1() {
 	/*
-	 * ccr0, 		ccr1, 		ccr2
+	 * ccr0, 			ccr1, 			ccr2
 	 * p2.3-pwmLED1,	p2.2-pwmLED2, 	p2.4-pwmLED3
 	 */
 	//Timer1
