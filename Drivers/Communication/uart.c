@@ -27,7 +27,7 @@
 // *************************************************************************************************
 void UART_Init(void) {
 	// Define UART ports
-	UART_PORT_SEL = UART_RXD + UART_TXD;   		// P1.1 = RXD, P1.2=TXD
+	UART_PORT_SEL = UART_RXD + UART_TXD;   		// P1.1 = RXD, P1.2=TXD, to be removed
 	UART_PORT_SEL2 = UART_RXD + UART_TXD;     	// P1.1 = RXD, P1.2=TXD
 
 	// Configure UART

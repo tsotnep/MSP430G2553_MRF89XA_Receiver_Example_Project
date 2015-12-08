@@ -35,13 +35,13 @@
  *
  */
 //port 1
-#define pwmLED1	BIT5
-#define pwmLED2	BIT6
+#define pwmLED4	BIT0
+#define pwmLED5	BIT1 //TODO conflicts with UART
 
 //port 2
-#define pwmLED3	BIT3
-#define pwmLED4	BIT2
-#define pwmLED5	BIT4
+#define pwmLED1	BIT2
+#define pwmLED2	BIT3
+#define pwmLED3	BIT4
 
 //timer setup, TODO: use signed(-100) and similar things, instead of binary values
 #define timerZeroStartValue		0b1111111110011011 // -100 => period is 100 counts
