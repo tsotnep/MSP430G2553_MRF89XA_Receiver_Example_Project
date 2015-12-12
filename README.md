@@ -5,6 +5,7 @@ before build: http://prntscr.com/9bheaq
 Demonstration: http://prntscr.com/9dcfa3
 
 why not HW pwm: http://prntscr.com/9dchxd
+
 why not increasing pwm period: http://prntscr.com/9dci71
 
 how it works: http://prntscr.com/9dcigh
@@ -22,7 +23,7 @@ PINs:
 1.5	com/SPIclk
 1.6	com/SPImiso
 1.7	com/SPImosi
-	
+
 2.0	com/intr 0
 2.1	com/intr 1
 2.2	LED 4
