@@ -39,7 +39,7 @@
  ***************************************************************************************************/
 //port 1
 #define pwmLED1_P10_T00	BIT0	//1.0
-#define pwmLED2_P11_T01	BIT1	//1.1	//TODO conflicts with UART_R
+#define pwmLED2_P11_T01	BIT1	//1.1
 #define pwmLED3_P12_T02	BIT2	//1.2
 
 
@@ -102,10 +102,6 @@ void main(void) {
 			Print_Error(exit_code);
 		} else {
 
-			// Toggle LED1 when data is received
-			// TODO : remove LED1_TOGGLE after ensuring communication is OKAY
-//			LED1_TOGGLE();
-
 //			UART_Send_Data("\r\nPacket length: ");
 //			UART0_Send_ByteToChar(&(RxPacket[0]));
 //
@@ -140,17 +136,6 @@ void main(void) {
 //
 //			UART_Send_Data("\r\n");		// Insert new line to separate packets
 		}
-
-		/*	TODO
-		 * 	here should be if-else statements,
-		 * 	and some logic,
-		 * 	so that highest-valued-pwm will be written in CCR0 (c) tsotne
-		 *
-		 *
-		 *
-		 *
-		 */
-
 	}
 }
 
