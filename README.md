@@ -4,6 +4,8 @@ before build: http://prntscr.com/9bheaq
 
 Demonstration: http://prntscr.com/9dcfa3
 
+crappy project overview, just read names ffs: http://prntscr.com/9dcndi
+
 why not HW pwm: http://prntscr.com/9dchxd
 
 why not increasing pwm period: http://prntscr.com/9dci71
