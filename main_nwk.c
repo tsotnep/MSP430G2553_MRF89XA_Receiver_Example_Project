@@ -106,16 +106,16 @@ void main(void) {
 			// TODO : remove LED1_TOGGLE after ensuring communication is OKAY
 //			LED1_TOGGLE();
 
-			UART_Send_Data("\r\nPacket length: ");
-			UART0_Send_ByteToChar(&(RxPacket[0]));
-
-			UART_Send_Data("\r\nDestination address: ");
-			UART0_Send_ByteToChar(&(RxPacket[1]));
-
-			UART_Send_Data("\r\nSource address: ");
-			UART0_Send_ByteToChar(&(RxPacket[2]));
-
-			UART_Send_Data("\r\nMessage: ");
+//			UART_Send_Data("\r\nPacket length: ");
+//			UART0_Send_ByteToChar(&(RxPacket[0]));
+//
+//			UART_Send_Data("\r\nDestination address: ");
+//			UART0_Send_ByteToChar(&(RxPacket[1]));
+//
+//			UART_Send_Data("\r\nSource address: ");
+//			UART0_Send_ByteToChar(&(RxPacket[2]));
+//
+//			UART_Send_Data("\r\nMessage: ");
 			for (var = 5; var < len; ++var) {
 				/* TODO
 				 * here we start writing RxPacket[var] -s into our array,
@@ -125,20 +125,20 @@ void main(void) {
 				 *
 				 *
 				 */
-				UART0_Send_ByteToChar(&(RxPacket[var]));
+//				UART0_Send_ByteToChar(&(RxPacket[var]));
 			}
 
 			// Print the RECEIVED_SIGNAL_SRENGTH
-			UART_Send_Data("\r\nSignal dtrength:");
-			UART0_Send_ByteToChar(&(rssi_rx));
+//			UART_Send_Data("\r\nSignal dtrength:");
+//			UART0_Send_ByteToChar(&(rssi_rx));
 
 			// Get environemnt RSSI value (noise level)
 			rssi_env = Radio_Get_RSSI();
 			// Print the NOISE LEVEL
-			UART_Send_Data("\r\nEnvironment noise level:");
-			UART0_Send_ByteToChar(&(rssi_env));
-
-			UART_Send_Data("\r\n");		// Insert new line to separate packets
+//			UART_Send_Data("\r\nEnvironment noise level:");
+//			UART0_Send_ByteToChar(&(rssi_env));
+//
+//			UART_Send_Data("\r\n");		// Insert new line to separate packets
 		}
 
 		/*	TODO
