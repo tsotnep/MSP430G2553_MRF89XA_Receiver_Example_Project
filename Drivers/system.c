@@ -37,7 +37,7 @@ uint8 System_Init(void) {
 	System_Set_Speed(SYSTEM_SPEED_MHZ);
 
 	// Ports
-	LED_PORT_DIR |=  (LED1);				//Set LED1 pin as output
+	LED_PORT_DIR |=  (LED1);				// Set LED1 pin as output
 	LED_PORT_OUT &= ~(LED1);				// Set LED1 pin to LOW
 	RF_RESET_OUT();							// Set RF module reset pin as output
 

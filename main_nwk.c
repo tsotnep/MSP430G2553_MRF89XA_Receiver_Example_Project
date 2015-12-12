@@ -6,6 +6,16 @@
  *	Editors: Tsotne Putkaradze, Nish Tahir
  *
  *  Version: 0.4		7.12.2015
+ *
+ *  communication: 	https://docs.google.com/spreadsheets/d/1EX6megqmACzNTX3JTMHogJLxSqM1P2WMeiZZyxYM3Lw/edit#gid=0
+ *  packet format: 	http://ati.ttu.ee/embsys/images/thumb/a/ae/Variable_length_packet_format.png/600px-Variable_length_packet_format.png
+ *  wireless chip: 	http://prntscr.com/9d8lgj
+ *
+ *  whole project: 	https://github.com/siavooshpayandehazad/TUT_EmbSys_SmartEnv
+ *	this part:		https://github.com/tsotnep/MSP430G2553_MRF89XA_Receiver_Example_Project
+ *
+ *  Family Guide:	http://www.ti.com/lit/ug/slau144j/slau144j.pdf
+ *  Datasheet:		http://www.ti.com/lit/ds/symlink/msp430g2553.pdf
  */
 /***************************************************************************************************
  *	        Include section					                       		   					       *
@@ -27,21 +37,16 @@
 /***************************************************************************************************
  *	        Define section					                       		   					       *
  ***************************************************************************************************/
-/* TODO
- * -pwmLED pins are OVERLAPPING with (Wireless module's & LED1_TOGGLE()) -s pins,
- * HIGH probably its better to (change Wireless pins & remove LED1_TOGGLE),
- * BUT before that, for testing, you can simply comment some our pwmLEDs.
- *
- *
- */
 //port 1
-#define pwmLED4	BIT0
-#define pwmLED5	BIT1 //TODO conflicts with UART
+#define pwmLED1_P10_T00	BIT0	//1.0
+#define pwmLED2_P11_T01	BIT1	//1.1	//TODO conflicts with UART_R
+#define pwmLED3_P12_T02	BIT2	//1.2
+
 
 //port 2
-#define pwmLED1	BIT2
-#define pwmLED2	BIT3
-#define pwmLED3	BIT4
+#define pwmLED4_P22_T10	BIT2	//2.2
+#define pwmLED5_P23_T11	BIT3	//2.3
+#define pwmLED6_P24_T12	BIT4	//2.4
 
 //timer setup, TODO: use signed(-100) and similar things, instead of binary values
 #define timerZeroStartValue		0b1111111110011011 // -100 => period is 100 counts
@@ -50,6 +55,7 @@
 /***************************************************************************************************
  *	        Prototype section					                       							   *
  ***************************************************************************************************/
+
 void _init_timer0();
 void _init_timer1();
 void Print_Error(uint8 error_code);
@@ -68,6 +74,13 @@ void main(void) {
 
 	// Initialize system
 	Print_Error(System_Init());
+
+	P1DIR |= (pwmLED1_P10_T00 | pwmLED2_P11_T01 | pwmLED3_P12_T02);
+	P1OUT &= ~(pwmLED1_P10_T00 | pwmLED2_P11_T01 | pwmLED3_P12_T02);
+
+	P2DIR |= (pwmLED4_P22_T10 | pwmLED5_P23_T11 | pwmLED6_P24_T12);
+	P2OUT &= ~(pwmLED4_P22_T10 | pwmLED5_P23_T11 | pwmLED6_P24_T12);
+
 	_init_timer0();
 	_init_timer1();
 
@@ -91,8 +104,7 @@ void main(void) {
 
 			// Toggle LED1 when data is received
 			// TODO : remove LED1_TOGGLE after ensuring communication is OKAY
-			LED1_TOGGLE()
-			;
+//			LED1_TOGGLE();
 
 			UART_Send_Data("\r\nPacket length: ");
 			UART0_Send_ByteToChar(&(RxPacket[0]));
@@ -142,12 +154,11 @@ void main(void) {
 	}
 }
 
-/******************************************************************
- ********************* ROUTINE T I M E R 0 ************************/
+/********************* ROUTINE T I M E R 0 ************************/
 //ccr0 - interrupt routine
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void Timer00_A(void) {
-	P2OUT |= (pwmLED1);			// CCR0
+	P1OUT |= (pwmLED1_P10_T00);			// CCR0
 }
 
 //ccr1, OverFlow - interrupt routine
@@ -155,21 +166,25 @@ __interrupt void Timer00_A(void) {
 __interrupt void Timer01_A(void) {
 	switch (TA0IV) {
 	case TA0IV_TACCR1:			// CCR1
-		P2OUT |= (pwmLED2);
+		P1OUT |= (pwmLED2_P11_T01);
 		break;
-	case TA1IV_TAIFG:			// OverFlow
-		P2OUT &= ~(pwmLED1 | pwmLED2);
+	case TA0IV_TACCR2:			// CCR2
+		P1OUT |= (pwmLED3_P12_T02);
+		break;
+	case TA0IV_TAIFG:			// OverFlow
+		P1OUT &= ~(pwmLED1_P10_T00);
+		P1OUT &= ~(pwmLED2_P11_T01);
+		P1OUT &= ~(pwmLED3_P12_T02);
 		TA0R = timerZeroStartValue;
 		break;
 	}
 }
 
-/******************************************************************
- ********************* ROUTINE T I M E R 1 ************************/
+/********************* ROUTINE T I M E R 1 ************************/
 //ccr0 - interrupt routine
 #pragma vector=TIMER1_A0_VECTOR
 __interrupt void Timer10_A(void) {
-	P2OUT |= (pwmLED3);			// CCR0
+	P2OUT |= (pwmLED4_P22_T10);			// CCR0
 }
 
 //ccr1, ccr2, OverFlow - interrupt routine
@@ -177,13 +192,15 @@ __interrupt void Timer10_A(void) {
 __interrupt void Timer11_A(void) {
 	switch (TA1IV) {
 	case TA1IV_TACCR1:			// CCR1
-		P2OUT |= (pwmLED4);
+		P2OUT |= (pwmLED5_P23_T11);
 		break;
 	case TA1IV_TACCR2:			// CCR2
-		P2OUT |= (pwmLED5);
+		P2OUT |= (pwmLED6_P24_T12);
 		break;
 	case TA1IV_TAIFG:			// OverFlow
-		P2OUT &= ~(pwmLED3 | pwmLED4 | pwmLED5);
+		P2OUT &= ~(pwmLED4_P22_T10);
+		P2OUT &= ~(pwmLED5_P23_T11);
+		P2OUT &= ~(pwmLED6_P24_T12);
 		TA1R = timerOneStartValue;
 		break;
 	}
@@ -192,35 +209,25 @@ __interrupt void Timer11_A(void) {
 /******************************************************************
  ******************* INITIALIZE T I M E R 0 ***********************/
 void _init_timer0() {
-	/*
-	 * ccr0, 			ccr1, 			ccr2
-	 * p1.5-pwmLED4, 	p1.6-pwmLED5,	p1.4//ccr2 is only on port3 that do not exists
-	 */
 	//Timer0
-	P1DIR |= (pwmLED1 | pwmLED2);
-	P1OUT &= ~(pwmLED1 | pwmLED2);
-	TA0CCR0 = 0B1111111111111100; 	//p1.5
-	TA0CCR1 = 0b1111111111001110; 	//p1.6
-	TA1R = timerZeroStartValue;
+	TA0CCR0 = 0B1111111111111100; 	//p1.0
+	TA0CCR1 = 0b1111111111110000; 	//p1.1
+	TA0CCR2 = 0b1111111111001110; 	//p1.2
+	TA0R = timerZeroStartValue;		//0b1111111110011011
 	TA0CCTL0 = CCIE;
 	TA0CCTL1 = CCIE;
-	TA1CTL = TASSEL_2 | MC_2 | ID_3 | TAIE;
+	TA0CCTL2 = CCIE;
+	TA0CTL = TASSEL_2 | MC_2 | ID_3 | TAIE;
 }
 
 /******************************************************************
  ******************* INITIALIZE T I M E R 1 ***********************/
 void _init_timer1() {
-	/*
-	 * ccr0, 			ccr1, 			ccr2
-	 * p2.3-pwmLED1,	p2.2-pwmLED2, 	p2.4-pwmLED3
-	 */
 	//Timer1
-	P2DIR |= (pwmLED3 | pwmLED4 | pwmLED5);
-	P2OUT &= ~(pwmLED3 | pwmLED4 | pwmLED5);
-	TA1CCR2 = 0b1111111111001110; 	//p2.3
-	TA1CCR1 = 0b1111111111100111; 	//p2.2
-	TA1CCR0 = 0B1111111111111100; 	//p2.4
-	TA1R = timerOneStartValue;
+	TA1CCR0 = 0b1111111111001110; 	//p2.2
+	TA1CCR1 = 0b1111111111110000; 	//p2.3
+	TA1CCR2 = 0B1111111111111100; 	//p2.4
+	TA1R = timerOneStartValue;		//0b1111111110011011
 	TA1CCTL0 = CCIE;
 	TA1CCTL1 = CCIE;
 	TA1CCTL2 = CCIE;

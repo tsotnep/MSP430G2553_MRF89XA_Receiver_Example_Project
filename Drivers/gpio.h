@@ -59,7 +59,7 @@
 #define UART_PORT_SEL      	(P1SEL)
 #define UART_PORT_SEL2      (P1SEL2)
 
-#define UART_RXD			BIT1	// P1.1, this can be removed at all, and instead this can be used as our LED pin
+#define UART_RXD			BIT1	// P1.1, TODO this can be removed at all, and instead this can be used as our LED pin
 #define UART_TXD			BIT2	// P1.2
 
 
