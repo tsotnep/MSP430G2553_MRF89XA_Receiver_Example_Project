@@ -2,8 +2,7 @@
  * main_nwk.c
  *
  *  Created  on: 06.02.2015
- *  Author: Mairo Leier, Maksim Gorev
- *	Editors: Tsotne Putkaradze, Nish Tahir
+ *	Author:	 Tsotne Putkaradze, Nish Tahir
  *
  *  Version: 0.4		7.12.2015
  *
@@ -42,15 +41,15 @@
 #define pwmLED2_P11_T01	BIT1	//1.1
 #define pwmLED3_P12_T02	BIT2	//1.2
 
-
 //port 2
 #define pwmLED4_P22_T10	BIT2	//2.2
 #define pwmLED5_P23_T11	BIT3	//2.3
 #define pwmLED6_P24_T12	BIT4	//2.4
 
-//timer setup, TODO: use signed(-100) and similar things, instead of binary values
-#define timerZeroStartValue		0b1111111110011011 // -100 => period is 100 counts
-#define timerOneStartValue		0b1111111110011011 // -100 => period is 100 counts
+
+#define timerZeroStartValue		0b1111111110011011 // -101 => period is 100 counts
+#define timerOneStartValue		0b1111111110011011 // -101 => period is 100 counts
+#define NumberOfLEDs			6
 
 /***************************************************************************************************
  *	        Prototype section					                       							   *
@@ -58,31 +57,37 @@
 
 void _init_timer0();
 void _init_timer1();
+void _init_CCRs();
+void _update_CCRs();
 void Print_Error(uint8 error_code);
 /***************************************************************************************************
  *	        Global Variable section  				                            				   *
  ***************************************************************************************************/
 uint8 exit_code = 0;		// Exit code number that is set after function exits
 uint8 payload_length;
+uint16 LEDvalues[NumberOfLEDs] = { 0 };
 
 /***************************************************************************************************
  *         Main section                                                                            *
  ***************************************************************************************************/
 void main(void) {
 	uint8 len, var;
-	uint8 rssi_env, rssi_rx;
+	uint8 rssi_rx;
 
 	// Initialize system
 	Print_Error(System_Init());
 
+	//Port 1 directions and initial values
 	P1DIR |= (pwmLED1_P10_T00 | pwmLED2_P11_T01 | pwmLED3_P12_T02);
 	P1OUT &= ~(pwmLED1_P10_T00 | pwmLED2_P11_T01 | pwmLED3_P12_T02);
 
+	//Port 2 directions and initial values
 	P2DIR |= (pwmLED4_P22_T10 | pwmLED5_P23_T11 | pwmLED6_P24_T12);
 	P2OUT &= ~(pwmLED4_P22_T10 | pwmLED5_P23_T11 | pwmLED6_P24_T12);
 
 	_init_timer0();
 	_init_timer1();
+	_init_CCRs();
 
 	while (1) {
 
@@ -101,53 +106,25 @@ void main(void) {
 		if (exit_code = Radio_Receive_Data(RxPacket, &len, 100, &rssi_rx)) {
 			Print_Error(exit_code);
 		} else {
-
-//			UART_Send_Data("\r\nPacket length: ");
-//			UART0_Send_ByteToChar(&(RxPacket[0]));
-//
-//			UART_Send_Data("\r\nDestination address: ");
-//			UART0_Send_ByteToChar(&(RxPacket[1]));
-//
-//			UART_Send_Data("\r\nSource address: ");
-//			UART0_Send_ByteToChar(&(RxPacket[2]));
-//
-//			UART_Send_Data("\r\nMessage: ");
 			for (var = 5; var < len; ++var) {
-				/* TODO
-				 * here we start writing RxPacket[var] -s into our array,
-				 * that we will process later - in if-else statement
-				 *
-				 *
-				 *
-				 *
-				 */
-//				UART0_Send_ByteToChar(&(RxPacket[var]));
+				if (var > 5) { //TODO : read "L" ascii, and put rest of logic in IF(readAscii = 'L')
+					LEDvalues[var - NumberOfLEDs] = 0b1111111100000000 | ~(RxPacket[var]);
+					if (var == 5 + NumberOfLEDs)
+						break;
+				}
 			}
-
-			// Print the RECEIVED_SIGNAL_SRENGTH
-//			UART_Send_Data("\r\nSignal dtrength:");
-//			UART0_Send_ByteToChar(&(rssi_rx));
-
-			// Get environemnt RSSI value (noise level)
-			rssi_env = Radio_Get_RSSI();
-			// Print the NOISE LEVEL
-//			UART_Send_Data("\r\nEnvironment noise level:");
-//			UART0_Send_ByteToChar(&(rssi_env));
-//
-//			UART_Send_Data("\r\n");		// Insert new line to separate packets
+			_update_CCRs();
 		}
 	}
 }
 
 /********************* ROUTINE T I M E R 0 ************************/
-//ccr0 - interrupt routine
-#pragma vector=TIMER0_A0_VECTOR
+#pragma vector=TIMER0_A0_VECTOR	//ccr0 - interrupt routine
 __interrupt void Timer00_A(void) {
 	P1OUT |= (pwmLED1_P10_T00);			// CCR0
 }
 
-//ccr1, OverFlow - interrupt routine
-#pragma vector=TIMER0_A1_VECTOR
+#pragma vector=TIMER0_A1_VECTOR	//ccr1, OverFlow - interrupt routine
 __interrupt void Timer01_A(void) {
 	switch (TA0IV) {
 	case TA0IV_TACCR1:			// CCR1
@@ -165,15 +142,14 @@ __interrupt void Timer01_A(void) {
 	}
 }
 
+
 /********************* ROUTINE T I M E R 1 ************************/
-//ccr0 - interrupt routine
-#pragma vector=TIMER1_A0_VECTOR
+#pragma vector=TIMER1_A0_VECTOR	//ccr0 - interrupt routine
 __interrupt void Timer10_A(void) {
 	P2OUT |= (pwmLED4_P22_T10);			// CCR0
 }
 
-//ccr1, ccr2, OverFlow - interrupt routine
-#pragma vector=TIMER1_A1_VECTOR
+#pragma vector=TIMER1_A1_VECTOR	//ccr1, ccr2, OverFlow - interrupt routine
 __interrupt void Timer11_A(void) {
 	switch (TA1IV) {
 	case TA1IV_TACCR1:			// CCR1
@@ -191,13 +167,8 @@ __interrupt void Timer11_A(void) {
 	}
 }
 
-/******************************************************************
- ******************* INITIALIZE T I M E R 0 ***********************/
+/******************* INITIALIZE T I M E R 0 ***********************/
 void _init_timer0() {
-	//Timer0
-	TA0CCR0 = 0B1111111111111100; 	//p1.0
-	TA0CCR1 = 0b1111111111110000; 	//p1.1
-	TA0CCR2 = 0b1111111111001110; 	//p1.2
 	TA0R = timerZeroStartValue;		//0b1111111110011011
 	TA0CCTL0 = CCIE;
 	TA0CCTL1 = CCIE;
@@ -205,13 +176,8 @@ void _init_timer0() {
 	TA0CTL = TASSEL_2 | MC_2 | ID_3 | TAIE;
 }
 
-/******************************************************************
- ******************* INITIALIZE T I M E R 1 ***********************/
+/******************* INITIALIZE T I M E R 1 ***********************/
 void _init_timer1() {
-	//Timer1
-	TA1CCR0 = 0b1111111111001110; 	//p2.2
-	TA1CCR1 = 0b1111111111110000; 	//p2.3
-	TA1CCR2 = 0B1111111111111100; 	//p2.4
 	TA1R = timerOneStartValue;		//0b1111111110011011
 	TA1CCTL0 = CCIE;
 	TA1CCTL1 = CCIE;
@@ -219,8 +185,35 @@ void _init_timer1() {
 	TA1CTL = TASSEL_2 | MC_2 | ID_3 | TAIE;
 }
 
-/******************************************************************
- ******************* PRINTING ERROR MESSAGES **********************/
+/******************* INITIALIZE L E D S  **************************/
+void _init_CCRs() {
+
+	//Timer0  0b11111111
+	TA0CCR0 = 0b1111111110011100; 	//p1.0	//-100
+	TA0CCR1 = 0b1111111110101011; 	//p1.1	//-85
+	TA0CCR2 = 0b1111111110111111; 	//p1.2	//-65
+
+	//Timer1  0b11111111
+	TA1CCR0 = 0b1111111111010011; 	//p2.2	//-45
+	TA1CCR1 = 0b1111111111100111; 	//p2.3	//-25
+	TA1CCR2 = 0B1111111111111011; 	//p2.4	//-5
+}
+
+/********************** UPDATE L E D S  **************************/
+void _update_CCRs() {
+
+	//Timer0
+	TA0CCR0 = LEDvalues[0]; 	//p1.0
+	TA0CCR1 = LEDvalues[1]; 	//p1.1
+	TA0CCR2 = LEDvalues[2]; 	//p1.2
+
+	//Timer1
+	TA1CCR0 = LEDvalues[3]; 	//p2.2
+	TA1CCR1 = LEDvalues[4]; 	//p2.3
+	TA1CCR2 = LEDvalues[5]; 	//p2.4
+}
+
+/******************* PRINTING ERROR MESSAGES **********************/
 void Print_Error(uint8 error_code) {
 
 	// Print out error code only if it is not 0
